@@ -18,7 +18,7 @@ import TrayIconManager from './main/tray';
 import Scheduler from './main/scheduler';
 import Mcp from './main/mcp';
 
-import { fixPath } from './main/utils';
+import { fixPath, putCachedText } from './main/utils';
 import { useI18n } from './main/i18n';
 import { installIpc } from './main/ipc';
 import { importOpenAI } from './main/import_oai';
@@ -44,21 +44,38 @@ const getHttpConfig = (settings: any): HttpCfg => {
   return { enabled: !!enabled, port: isNaN(port) ? 18081 : port };
 };
 
-const handleHttpCmd = async (cmd: string): Promise<boolean> => {
+const handleHttpCmd = async (
+  cmd: string,
+  params?: { text?: string; action?: string }
+): Promise<boolean> => {
   try {
     switch ((cmd || '').toLowerCase()) {
-      case 'prompt':
-        await PromptAnywhere.open();
+      case 'prompt': {
+        if (params?.text) {
+          const promptId = putCachedText(params.text);
+          await window.openPromptAnywhere({ promptId });
+        } else {
+          await PromptAnywhere.open();
+        }
         return true;
+      }
       case 'chat':
         await window.openMainWindow({ queryParams: { view: 'chat' } });
         return true;
       case 'scratchpad':
         await window.openScratchPad();
         return true;
-      case 'command':
+      case 'command': {
+        if (params?.text) {
+          const textId = putCachedText(params.text);
+          const automator = new Automator();
+          const sourceApp = await automator.getForemostApp();
+          await window.openCommandPicker({ textId, sourceApp, startTime: Date.now() });
+          return true;
+        }
         await Commander.initCommand(app);
         return true;
+      }
       case 'readaloud':
         await ReadAloud.read(app);
         return true;
