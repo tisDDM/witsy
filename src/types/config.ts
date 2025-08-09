@@ -25,6 +25,9 @@ export type Configuration = {
   realtime: RealtimeConfig
   mcp: McpConfig
   mcpServers: Record<string, McpClaudeServer>
+  // PR2: optional local HTTP trigger settings
+  httpServerEnabled?: boolean
+  httpServerPort?: number
   features?: Record<string, any>
 }
 
@@ -290,4 +293,3 @@ export type McpConfig = {
   mcpServersExtra: Record<string, McpServerExtra>
   smitheryApiKey: string
 }
-
