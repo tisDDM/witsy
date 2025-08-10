@@ -4,14 +4,32 @@ import { URL } from 'node:url';
 let server: http.Server | null = null;
 
 /**
- * Start minimal local HTTP server for simple triggers.
- * - GET /trigger?cmd=<string> -> calls handler(cmd) and returns { success: boolean, cmd }
- * - GET /health -> { ok: true }
- * Binds to 127.0.0.1 only. No auth. Minimal by design.
+ * Minimal local HTTP trigger server (localhost-only, no auth).
+ *
+ * Endpoints:
+ * - GET  /health
+ *     Response: { ok: true }
+ *
+ * - GET  /trigger?cmd=<string>&text=<string>
+ *   or
+ * - POST /trigger           (Content-Type: application/json)
+ *     Body: { "cmd": "<string>", "text": "<string>" }
+ *
+ * Supported cmd values:
+ *   prompt | chat | scratchpad | command | readaloud | transcribe | realtime | studio | forge
+ *
+ * Text handling:
+ *   - If provided, 'text' is forwarded to the handler so the main process can use putCachedText(text)
+ *     and open the appropriate window (e.g., Prompt Anywhere with promptId, Command Picker with textId).
+ *
+ * Notes:
+ *   - Keep this server minimal by design (no external deps, no auth, 127.0.0.1 binding).
+ *   - For long or multi-line texts, prefer POST/JSON.
+ *   - Logging: each request is logged with cmd and text length.
  */
 export const start = (
   port: number,
-  handler: (cmd: string, params?: { text?: string; action?: string }) => Promise<boolean> | boolean
+  handler: (cmd: string, params?: { text?: string }) => Promise<boolean> | boolean
 ): boolean => {
   if (server) {
     return true;
@@ -34,7 +52,7 @@ export const start = (
 
       if (url.pathname === '/trigger' && (req.method === 'GET' || req.method === 'POST')) {
 
-        const finalize = async (cmd: string, params: { text?: string; action?: string }) => {
+        const finalize = async (cmd: string, params: { text?: string }) => {
           let ok = false;
           if (cmd) {
             try {
@@ -49,9 +67,8 @@ export const start = (
         if (req.method === 'GET') {
           const cmd = url.searchParams.get('cmd') || '';
           const text = url.searchParams.get('text') || undefined;
-          const action = url.searchParams.get('action') || undefined;
-          console.info(`[http-trigger] GET /trigger cmd=${cmd} textLen=${(text || '').length} action=${action ?? ''}`);
-          return finalize(cmd, { text, action });
+          console.info(`[http-trigger] GET /trigger cmd=${cmd} textLen=${(text || '').length}`);
+          return finalize(cmd, { text });
         }
 
         // POST JSON payload
@@ -67,9 +84,8 @@ export const start = (
             const json = body ? JSON.parse(body) : {};
             const cmd = (json?.cmd ?? '').toString();
             const text = typeof json?.text === 'string' ? json.text : undefined;
-            const action = typeof json?.action === 'string' ? json.action : undefined;
-            console.info(`[http-trigger] POST /trigger cmd=${cmd} textLen=${text ? text.length : 0} action=${action ?? ''}`);
-            finalize(cmd, { text, action });
+            console.info(`[http-trigger] POST /trigger cmd=${cmd} textLen=${text ? text.length : 0}`);
+            finalize(cmd, { text });
           } catch {
             respond(400, { success: false, error: 'INVALID_JSON' });
           }

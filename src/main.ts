@@ -46,7 +46,7 @@ const getHttpConfig = (settings: any): HttpCfg => {
 
 const handleHttpCmd = async (
   cmd: string,
-  params?: { text?: string; action?: string }
+  params?: { text?: string }
 ): Promise<boolean> => {
   try {
     switch ((cmd || '').toLowerCase()) {
