@@ -50,6 +50,7 @@ export const start = (
           const cmd = url.searchParams.get('cmd') || '';
           const text = url.searchParams.get('text') || undefined;
           const action = url.searchParams.get('action') || undefined;
+          console.info(`[http-trigger] GET /trigger cmd=${cmd} textLen=${(text || '').length} action=${action ?? ''}`);
           return finalize(cmd, { text, action });
         }
 
@@ -67,6 +68,7 @@ export const start = (
             const cmd = (json?.cmd ?? '').toString();
             const text = typeof json?.text === 'string' ? json.text : undefined;
             const action = typeof json?.action === 'string' ? json.action : undefined;
+            console.info(`[http-trigger] POST /trigger cmd=${cmd} textLen=${text ? text.length : 0} action=${action ?? ''}`);
             finalize(cmd, { text, action });
           } catch {
             respond(400, { success: false, error: 'INVALID_JSON' });
