@@ -43,7 +43,7 @@ export const start = (port: number, handler: (cmd: string) => Promise<boolean> |
 
         res.statusCode = 404;
         res.end(JSON.stringify({ success: false, error: 'NOT_FOUND' }));
-      } catch (e) {
+      } catch {
         res.statusCode = 500;
         res.end(JSON.stringify({ success: false, error: 'SERVER_ERROR' }));
       }
