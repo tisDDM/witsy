@@ -189,6 +189,8 @@ export type ShortcutsConfig = {
   realtime: Shortcut
   studio: Shortcut
   forge: Shortcut
+  // optional Flag: globale Shortcuts (Default-Logik erfolgt zur Laufzeit in main/shortcuts.ts)
+  enableGlobalShortcuts?: boolean
 }
 
 export type ScratchpadConfig = {
@@ -295,4 +297,3 @@ export type McpConfig = {
   mcpServersExtra: Record<string, McpServerExtra>
   smitheryApiKey: string
 }
-
